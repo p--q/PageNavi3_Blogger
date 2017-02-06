@@ -14,7 +14,7 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
                 var addr_page = "/search?updated-max=" + timestamp + "&max-results=" + g.perPage + "#PageNo=" + g.pageNo; 
                 location.href =(g.postLabel)?addr_label:addr_page;  // ラベルインデックスページとインデックスページでURLが異なることへの対応。
             }, 
-            getTotalPostCount : function(root){ 
+            acceptFeed : function(root){ 
                 var total_posts = parseInt(root.feed.openSearch$totalResults.$t, 10);  // 取得したフィードから総投稿総数を得る。
                 createNodes(total_posts);  // 総投稿数をもとにページナビのボタンを作成する。
             }
@@ -28,12 +28,10 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
         perPage : pg.defaults.perPage,  // デフォルト値の取得。
         numPages : pg.defaults.numPages,  // デフォルト値の取得。
         jumpPages : pg.defaults.numPages, // ジャンプボタンでページ番号が総入れ替えになる設定値。
-        postLabel : null,  // ラベル名。
+        // postLabel : null,  // ラベル名。
         pageNo : null,  // ページ番号。
         currentPageNo : null,  // 現在のページ番号。
-        elementID : null,  // ページナビを挿入するdiv要素のid。
-        y : null,  // 年
-        m : null // 月
+        elementID : null  // ページナビを挿入するdiv要素のid。
     };
     function redirect(pageNo) {  // ページ番号のボタンをクリックされた時に呼び出される関数。
         g.pageNo = pageNo;  // 表示するページ番号
@@ -82,22 +80,36 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
         writeHtml(buttunElems);  // htmlの書き込み。
     }
     function createPageNavi() {  // URLからラベル名、検索語、ページナビの年月を得てフィードを取得する。
-        var thisUrl = location.href;  // 現在表示しているURL。
-        g.y = null;  // 年を初期化。
-        g.m = null;  // 月を初期化。
+    	var y,m;
+    	var url = null;
+        var thisUrl = location.href;  // 現在表示しているURLを収得。
         if (/\/search\/label\//i.test(thisUrl)) {  // ラベルインデックスページの場合URLからラベル名を取得。
             thisUrl = thisUrl.replace("m=0?","");  // モバイルデバイスからウェブバージョンを見た時の文字列を削除。
-            g.postLabel = /\/search\/label\/(.+)(?=\?)/i.exec(thisUrl)[1];  // ラベル名を取得。後読みは未実装の可能性あるので使わない。
+            var postLabel = /\/search\/label\/(.+)(?=\?)/i.exec(thisUrl)[1];  // ラベル名を取得。後読みは未実装の可能性あるので使わない。
+            url = '/feeds/posts/summary/-/' + postLabel + "?alt=json-in-script&callback=PageNavi3_Blogger.callback.acceptFeed&max-results=" + g.perPage;       
         } else if (/_archive.html/i.test(thisURL)) {  // 月のアーカイブページの時。モバイルの時は後ろに?m=1がつく。
         	var match = /(\d\d\d\d)_(\d\d)_\d\d_archive.html/i.exec(thisUrl);  // URLから年月を取得。
-        	g.y = match[1];  // 年を取得。
-        	g.m = match[2];  // 月を取得。
+        	y = match[1];  // 年を取得。
+        	m = match[2];  // 月を取得。
+        	
         } else if (/\/search\?updated-min=(\d\d\d\d)-01-01T00:00:00%2B09:00&updated-max=(\d\d\d\d)-01-01T00:00:00%2B09:00&/i.test(thisURL)) {  // 年のアーカイブページの時。
-        	g.y = /\/search\?updated-min=(\d\d\d\d)-01-01T00:00:00%2B09:00&updated-max=(\d\d\d\d)-01-01T00:00:00%2B09:00&/i.exec(thisUrl)[1];  // URLから年を取得。
+        	y = /\/search\?updated-min=(\d\d\d\d)-01-01T00:00:00%2B09:00&updated-max=(\d\d\d\d)-01-01T00:00:00%2B09:00&/i.exec(thisUrl)[1];  // URLから年を取得。
+        	
+        	
+        	url = "/feeds/posts/summary?start-index=" + startPost + "&alt=json-in-script&callback=PageNavi3_Blogger.callback.acceptFeed&max-results=" + g.perPage;
+        	
         } else if (/\?q=/i.test(thisURL)) {  // 検索結果ページのとき
-        	/\?q=(.+)[^&]/i.exec(thisUrl) &m=1があるときとないときに未対応
+        	thisUrl = thisUrl.replace("&m=1","");  // モバイルサイトの付属文字列を削除。
+        	var q = /\?q=(.+)/i.exec(thisUrl);  // 検索文字列を収得。
+        	
+        	
+        } else {  // 通常のインデックスページのとき
+        	
+        	
         	
         }
+        if (url) {writeScript(url);}
+        
         
         
         
