@@ -17,16 +17,20 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 //                var addr_page = "/search?updated-max=" + timestamp + "&max-results=" + g.perPage + "#PageNo=" + g.pageNo; 
 //                location.href =(g.postLabel)?addr_label:addr_page;  // ラベルインデックスページとインデックスページでURLが異なることへの対応。
 //            }, 
-            loadFeed : function(root){  // 引数にフィードを受け取る関数。 
+            loadFeed : function(json){  // 引数にフィードを受け取る関数。 
+            	var posts = [];
+            	Array.prototype.push.apply(posts, json.feed.entry);// 投稿のフィードデータを配列に追加。
+            	createIndex(posts);
             	
             	
+//            	vars.dic[d].push([e.link[4].href, e.link[4].title, url]);  // 辞書の値の配列に[投稿のURL, 投稿タイトル, サムネイルのURL]
 //                var total_posts = parseInt(root.feed.openSearch$totalResults.$t, 10);  // 取得したフィードから総投稿総数を得る。
 //                createNodes(total_posts);  // 総投稿数をもとにページナビのボタンを作成する。
             }
         },
         all: function(elementID) {  // ここから開始する。引数にページナビを置換する要素のidを入れる。
         	g.elementID = elementID;
-        	if (g.elementID) {createPageNavi();}  // 置換する要素が存在するときページナビを作成する。
+        	if (g.elementID) {createURL(1);}  // 置換する要素が存在するときページナビを作成する。
         }
     }; // end of pg
     var g = {  // PageNavi3_Bloggerモジュール内の"グローバル"変数。
@@ -40,27 +44,37 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
     };
     
     
-    function createPageNavi() {  // URLから情報を得てフィードを取得するURLを作成。
-    	var url = null; // フィードを得るurlを初期化。
-        var thisUrl = location.href;  // 現在表示しているURLを収得。
-        thisUrl = thisUrl.replace(/\?m=[01][&\?]/,"?").replace(/[&\?]m\=[01]/,"");  // ウェブバージョンとモバイルサイトのパラメータを削除。
-        if (/\/search\/label\//.test(thisUrl)) {  // ラベルインデックスページの時。
-            var postLabel = /\/search\/label\/(.+)/.exec(thisUrl)[1];  // ラベル名を取得。後読みは未実装の可能性あるので使わない。
-            url = "/feeds/posts/summary/-/" + postLabel + "?alt=json-in-script&callback=PageNavi3_Blogger.callback.loadFeed&max-results=" + g.perPage;       
-        } else if (/_archive.html/i.test(thisUrl)) {  // 月のアーカイブページの時。モバイルの時は後ろに?m=1がつく。
-        	var arr = /(\d\d\d\d)_(\d\d)_\d\d_archive.html/i.exec(thisUrl);  // URLから年月を取得。
+    function createIndex(posts) {  // 投稿のフィードデータからインデックスページを作成する。
+    	
+    	
+    	
+    	
+    }
+    function createURL(idx) {  // URLから情報を得てフィードを取得するURLを作成。
+    	var reL = /\/search\/label\/(.+)/;  // ラベル収得のための正規表現パターン。
+    	var reQ = /\?q=(.+)/;  // 検索語収得のための正規表現パターン。
+    	var reM = /(\d\d\d\d)_(\d\d)_\d\d_archive.html/;  // 月のアーカイブページから年月を得るための正規表現パターン。
+    	var reY = /\/search\?(updated-min=\d\d\d\d-01-01T00:00:00%2B09:00&updated-max=\d\d\d\d-01-01T00:00:00%2B09:00)/;  // 年のアーカイブページから期間を得るための正規表現パターン。
+    	var url = "?"; // フィードを得るURLを初期化。
+    	var url2 = "";  // アーカイブページ用の追加URLを初期化。
+    	var thisUrl = location.href;  // 現在表示しているURLを収得。
+    	thisUrl = thisUrl.replace(/\?m=[01][&\?]/,"?").replace(/[&\?]m=[01]/,"");  // ウェブバージョンとモバイルサイトのパラメータを削除。
+    	if (reQ.test(thisUrl)) {  // 検索結果ページのとき
+        	var q = reQ.exec(thisUrl)[1];  // 検索文字列を収得
+        	url = "/?q=" + q + "&";
+    	} else if (reL.test(thisUrl)) {  // ラベルインデックスページの時。
+            var postLabel = reL.exec(thisUrl)[1];  // ラベル名を取得。後読みは未実装の可能性あるので使わない。
+            url = "/-/" + postLabel + url;       
+        } else if (reM.test(thisUrl)) {  // 月のアーカイブページの時。モバイルの時は後ろに?m=1がつく。
+        	var arr = reM.exec(thisUrl);  // URLから年月を取得。
         	var em = new Date(arr[1], arr[2], 0).getDate();  // 月の末日を取得。28から31のいずれかしか返ってこないはず。
-        	url = "/feeds/posts/summary?alt=json-in-script&published-min=" + arr[1] + "-" + arr[2] + "-01T00:00:00%2B09:00&published-max=" + arr[1] + "-" + arr[2] + "-" + em  + "T23:59:99%2B09:00&max-results=" + g.perPage;  
-        } else if (/\/search\?updated-min=\d\d\d\d-01-01T00:00:00%2B09:00&updated-max=\d\d\d\d-01-01T00:00:00%2B09:00/.test(thisUrl)) {  // 年のアーカイブページの時。
-        	url = /\/search\?(updated-min=\d\d\d\d-01-01T00:00:00%2B09:00&updated-max=\d\d\d\d-01-01T00:00:00%2B09:00)/.exec(thisUrl)[1].replace(/updated-/g,"published-");  // URLから期間を取得。
-        	url = "/feeds/posts/summary?alt=json-in-script&" + url + "&max-results=" + g.perPage;       
-        } else if (/\?q=/.test(thisUrl)) {  // 検索結果ページのとき
-        	var q = /\?q=(.+)/.exec(thisUrl)[1];  // 検索文字列を収得
-        	url = "/feeds/posts/summary/?q=" + q + "&alt=json-in-script&callback=PageNavi3_Blogger.callback.loadFeed&max-results=" + g.perPage;
-        } else if (thisUrl == location.hostname) {  // トップページのとき
-        	url = "/feeds/posts/summary/?alt=json-in-script&callback=PageNavi3_Blogger.callback.loadFeed&max-results=" + g.perPage;
-        }
-        if (url) {writeScript(url);}
+        	url2 = "&published-min=" + arr[1] + "-" + arr[2] + "-01T00:00:00%2B09:00&published-max=" + arr[1] + "-" + arr[2] + "-" + em  + "T23:59:99%2B09:00";  
+        } else if (reY.test(thisUrl)) {  // 年のアーカイブページの時。
+        	url2 = reY.exec(thisUrl)[1].replace(/updated-/g,"published-");  // URLから期間を取得。
+        	url2 = "&" + url2;       
+        } 
+    	url = "/feeds/posts/summary" + url + "alt=json-in-script&callback=PageNavi3_Blogger.callback.loadFeed&max-results=" + g.perPage + "&start-index=" + idx + url2;    
+    	writeScript(url);
     }   
     function writeScript(url) {  // スクリプト注入。
         var ws = createElem('script');
@@ -68,8 +82,124 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
         ws.src = url;
         document.getElementsByTagName('head')[0].appendChild(ws);
     }        
-    
-    
+	function createElem(tag){  // tagの要素を作成して返す。
+		return document.createElement(tag); 
+	}       
+	
+    var nd = {  // HTML要素のノードを作成するオブジェクト。
+            postsflxC: function() {  // 投稿のflexコンテナを返す。
+                var node = createElem("div");  // flexコンテナになるdiv要素を生成。
+                node.style.display = "flex";  // flexコンテナにする。
+                node.style.flexWrap = "wrap";  // flexコンテナの要素を折り返す。 
+                return node;
+            },
+            postsflxI: function(text) {  // 投稿のflexアイテムを返す。
+                var node = createElem("div");  // flexアイテムになるdiv要素を生成。
+                node.textContent = text;
+                node.style.flex = "1 0 14%";  // flexアイテムの最低幅を1/7弱にして均等に拡大可能とする。
+                node.style.textAlign = "center";  // flexアイテムの内容を中央寄せにする。  
+                return node;
+            },
+            dateflxIWithPost: function(date) {  // 投稿の日のflexアイテムを返す。
+                var node = nd.calflxI(); // カレンダーのflexアイテムを取得。  
+                node.className = "post";  // クラス名をpostにする。
+                node.textContent = date;  // 日をtextノードに取得。textContentで代入すると子ノードは消えてしまうので注意。
+                node.style.backgroundColor = "rgba(128,128,128,.4)";  // 背景色
+                node.style.borderRadius = "50%";  // 背景の角を丸める
+                node.style.cursor = "pointer";  // マウスポインタの形状を変化させる。
+                return node;
+            },
+            datePostsNode: function() {  // 日の投稿データを表示させるflexコンテナを返す。
+                var node = createElem("div");  // flexコンテナになるdiv要素を生成。
+                node.style.display = "flex";  // flexコンテナにする。
+                node.id = vars.dataPostsID;  // idを設定。
+                node.style.flexDirection = "column";  // flexアイテムを縦並びにする。
+                return node;
+            },
+            _postflxC: function() {  // 日の投稿のdiv要素を返す。
+                var node = createElem("div");  // div要素を生成。
+                node.style.borderTop = "dashed 1px rgba(128,128,128,.5)";
+                node.style.paddingTop = "5px";       
+                return node;
+            },
+            _imgflxI: function(arr) {  // サムネイル画像の投稿のdiv要素を返す。引数は配列。
+                var node = createElem("div");  // div要素を生成。
+                var img = createElem("img");
+                img.src = arr[2];  // 配列からサムネイル画像のurlを取得。
+                var a = nd._a(arr);  // 投稿のurlを入れたa要素を取得。
+                a.appendChild(img);  // サムネイル画像のノードをa要素に追加。
+                node.appendChild(a);            
+                return node;
+            },
+            _a: function(arr) {  // 投稿のurlを入れたa要素を返す。
+                var node = createElem("a"); 
+                node.href = arr[0];  // 配列から投稿のurlを取得。
+                return node;
+            },
+            _titleflxI: function(arr) {  // 投稿タイトルの投稿のdiv要素を返す。
+                var node = createElem("div");  //div要素を生成。
+                var a = nd._a(arr);
+                a.textContent = arr[1];
+                node.appendChild(a);            
+                return node;
+            },
+            postNode: function(arr) {  // 引数は[投稿のURL, 投稿タイトル, サムネイルのURL]の配列。
+                var node = nd._postflxC(); // 日の投稿のflexコンテナを取得。
+                if (arr[2]) {  // サムネイルがあるとき
+                    var imgflxI = nd._imgflxI(arr);  // サムネイル画像を入れる投稿のdiv要素。引数は配列。
+                    imgflxI.style.float = "left";  // 画像の周りのテキストを右から下に回りこませる。
+                    imgflxI.style.padding = "0 5px 5px 0";  // 右と下に5px空ける。
+                    node.appendChild(imgflxI);
+                }
+                var titleflxI = nd._titleflxI(arr);
+                node.appendChild(titleflxI);
+                return node;
+            },
+            _arrowflxI: function(text,id) {  // 月を移動するボタンを返す。
+                var node = createElem("div");  // flexアイテムになるdiv要素を生成。
+                node.textContent = text;
+                node.id = id;
+                node.style.flex = "0 0 14%";  // 1/7幅で伸縮しない。
+                node.style.textAlign = "center";
+                return node;
+            },
+            leftarrowflxI: function() {  // 左向き矢印のflexアイテム。flexBasis14%。
+                var dt = new Date();  // 今日の日付オブジェクトを取得。
+                var now = new Date(dt.getFullYear(), dt.getMonth(),1);  // 今月の1日のミリ秒を取得。
+                var caldate = new Date(vars.y, vars.m-1,1);  // カレンダーの1日のミリ秒を取得。
+                if (now > caldate) {  // 表示カレンダーの月が現在より過去のときのみ左矢印を表示させる。
+                    var node = nd._arrowflxI('\u00ab',"left_calendar");
+                    node.style.cursor = "pointer";  // マウスポインタの形状を変化させる。
+                    node.title = (vars.L10N)?"Newer":"翌月へ";
+                    return node;
+                } else {
+                    return nd._arrowflxI(null,null);
+                }
+            },
+            rightarrowflxI: function() {  // 右向き矢印のflexアイテム。flexBasis14%。
+                var dt = new Date(2013,3,1);  // 最初の投稿月の日付オブジェクトを取得。
+                var firstpost = new Date(dt.getFullYear(), dt.getMonth(),1);  // 今月の1日のミリ秒を取得。
+                var caldate = new Date(vars.y, vars.m-1,1);  // カレンダーの1日のミリ秒を取得。
+                if (firstpost > caldate) {  // 表示カレンダーの月が初投稿より未来のときのみ右矢印を表示させる。
+                    return nd._arrowflxI(null,null);
+                } else {
+                    var node = nd._arrowflxI('\u00bb',"right_calendar");
+                    node.style.cursor = "pointer";  // マウスポインタの形状を変化させる。
+                    node.title = (vars.L10N)?"Older":"前月へ";
+                    return node;
+                }
+            },        
+            titleflxI: function(title) {
+                var node = createElem("div");  // flexアイテムになるdiv要素を生成。
+                node.textContent = title;
+                node.id = "title_calendar";
+                node.style.flex = "1 0 72%";
+                node.style.textAlign = "center";
+                node.style.cursor = "pointer";  // マウスポインタの形状を変化させる。
+                node.title = (vars.L10N)?"Switching between published and updated":"公開日と更新日を切り替える";
+                return node;
+            }
+        };  // end of nd
     
     
     
@@ -90,9 +220,7 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 //            writeScript(url);  //スクリプト注入。
 //        }
 //    }
-//    function createElem(tag){  // tagの要素を作成して返す。
-//       return document.createElement(tag); 
-//    }   
+
 //    function createNodes(total_posts) {  // 総投稿数からページナビのボタンを作成。
 //        var buttunElems = []; // ボタン要素を入れる配列。
 //        var numPages = g.numPages;  // ページナビに表示するページ数。
