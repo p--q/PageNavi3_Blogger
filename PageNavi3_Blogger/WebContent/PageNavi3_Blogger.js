@@ -6,7 +6,11 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
             "numPages" : 5  // ページナビに表示する通常ページボタンの数。スタートページからエンドページまで。
         },
         callback : {  // フィードを受け取るコールバック関数。
-        	
+            loadFeed : function(json){  // 引数にフィードを受け取る関数。 
+            	var posts = [];
+            	Array.prototype.push.apply(posts, json.feed.entry);// 投稿のフィードデータを配列に追加。
+            	createIndex(posts);
+            	   	
         	
         	
 //            getURL : function(root){  // フィードからタイムスタンプを得て表示させるURLを作成してそこに移動する。
@@ -17,11 +21,7 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 //                var addr_page = "/search?updated-max=" + timestamp + "&max-results=" + g.perPage + "#PageNo=" + g.pageNo; 
 //                location.href =(g.postLabel)?addr_label:addr_page;  // ラベルインデックスページとインデックスページでURLが異なることへの対応。
 //            }, 
-            loadFeed : function(json){  // 引数にフィードを受け取る関数。 
-            	var posts = [];
-            	Array.prototype.push.apply(posts, json.feed.entry);// 投稿のフィードデータを配列に追加。
-            	createIndex(posts);
-            	
+
             	
 //            	vars.dic[d].push([e.link[4].href, e.link[4].title, url]);  // 辞書の値の配列に[投稿のURL, 投稿タイトル, サムネイルのURL]
 //                var total_posts = parseInt(root.feed.openSearch$totalResults.$t, 10);  // 取得したフィードから総投稿総数を得る。
@@ -93,7 +93,7 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
                 node.style.flexWrap = "wrap";  // flexコンテナの要素を折り返す。 
                 return node;
             },
-            postsflxI: function(text) {  // 投稿のflexアイテムを返す。
+            postflxI: function(text) {  // 投稿のflexアイテムを返す。
                 var node = createElem("div");  // flexアイテムになるdiv要素を生成。
                 node.textContent = text;
                 node.style.flex = "1 0 14%";  // flexアイテムの最低幅を1/7弱にして均等に拡大可能とする。
