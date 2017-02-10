@@ -94,10 +94,11 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 	    	var reB = /^前の関連記事：/;  // 以前の記事の整形用の正規表現パターン。
 	    	var n = 120;  // サマリーを表示させる制限文字数。
 	    	if (reB.test(s)) {  // 先頭に前の関連記事のリンクがあるとき
-	    		return s.substring(1,n) + "…";
+	    		return s.substring(0,n) + "…";
 	    	} else {
 	    		s = s.replace(reS,"");
-	    		return (s.length>n)?s.substring(1,n) + "…":s;
+	    		s = (s.length>n)?s.substring(0,n) + "…":s;
+	    		return s;
 	    	}
 	    },
     	_createDate: function(d,txt) {  // 整形日時のdiv要素を返す関数。
