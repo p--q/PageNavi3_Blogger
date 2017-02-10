@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+
+     <b:if cond='!data:mobile'> <!-- モバイルサイトでないとき -->
+		<div class='blog-posts hfeed'>
+		<b:include data='top' name='status-message'/>
+		<b:if cond='data:blog.pageType == &quot;index&quot;'> <!-- インデックスページのとき -->
+          <div class='blog-pager' id='blog-pager3'/><!-- ページナビv3 -->
+		<b:else/>		
+			<b:if cond='data:blog.searchLabel'> <!-- ラベルインデックスページのとき -->
+				<div class='blog-pager' id='blog-pager3'/> <!-- ページナビv3 -->
+			<b:else/>		
+				<b:if cond='data:blog.pageType == &quot;archive&quot;'> <!-- 月のアーカイブページのとき -->
+					<div class='blog-pager' id='blog-pager3'/> <!-- ページナビv3 -->
+				<b:else/> <!-- 上記以外のページのとき -->
+					<b:loop values='data:posts' var='post'>
+						<div class='post-outer'>
+							<b:include data='post' name='post'/>
+						</div>
+						<b:include name='nextprev'/>
+						<b:include name='feedLinks'/>
+					</b:loop>
+				</b:if>
+			</b:if>
+		</b:if>
+		<b:if cond='data:numPosts != 0'>
+			&lt;/div&gt;&lt;/div&gt; <!-- これがないとカラムがずれる -->
+		</b:if>
+		</div>
+    <b:else/> <!-- モバイルサイトのとき -->
+		<b:include name='mobile-main'/>
+	</b:if>
+
+
+
+</body>
+</html>

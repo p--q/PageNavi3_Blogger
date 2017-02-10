@@ -1,154 +1,180 @@
-// PageNavi2_Bloggerモジュール
-var PageNavi2_Blogger = PageNavi2_Blogger || function() {
-    var pg = {  // グローバルスコープに出すオブジェクト。グローバルスコープから呼び出すときはPageNavi2_Bloggerになる。
+// PageNavi3_Bloggerモジュール
+var PageNavi3_Blogger = PageNavi3_Blogger || function() {
+    var pg = {  // グローバルスコープに出すオブジェクト。グローバルスコープから呼び出すときはPageNavi3_Bloggerになる。
         defaults : {  // 既定値。
-            "perPage" : 7, //1ページあたりの投稿数。1ページの容量が1MBを超えないように設定する。
+            "perPage" : 7, //1ページあたりの投稿数。1ページの容量が1MBを超えないように設定する。最大150まで。
             "numPages" : 5  // ページナビに表示する通常ページボタンの数。スタートページからエンドページまで。
         },
         callback : {  // フィードを受け取るコールバック関数。
-            getURL : function(root){  // フィードからタイムスタンプを得て表示させるURLを作成してそこに移動する。
-                var post = root.feed.entry[0];  // フィードから先頭の投稿を取得。
-                var m = /(\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d)\.\d\d\d(.\d\d:\d\d)/i.exec(post.published.$t);
-                var timestamp = encodeURIComponent(m[1] + m[2]);  // 先頭の投稿からタイプスタンプを取得。
-                var addr_label = "/search/label/" + vars.postLabel + "?updated-max=" + timestamp + "&max-results=" + vars.perPage + "#PageNo=" + vars.pageNo;
-                var addr_page = "/search?updated-max=" + timestamp + "&max-results=" + vars.perPage + "#PageNo=" + vars.pageNo; 
-                location.href =(vars.postLabel)?addr_label:addr_page;  // ラベルインデックスページとインデックスページでURLが異なることへの対応。
-            }, 
-            getTotalPostCount : function(root){ 
-                var total_posts = parseInt(root.feed.openSearch$totalResults.$t, 10);  // 取得したフィードから総投稿総数を得る。
-                createNodes(total_posts);  // 総投稿数をもとにページナビのボタンを作成する。
+            loadFeed : function(json){  // 引数にフィードを受け取る関数。 
+            	var posts = [];
+            	Array.prototype.push.apply(posts, json.feed.entry);// 投稿のフィードデータを配列に追加。
+            	ix.createIndex(posts);  // インデックスページの作成。
             }
         },
-        all: function(array_elementIDs) {  // ここから開始する。引数にページナビを置換する要素のidを配列に入れる。
-            array_elementIDs.forEach(function(e){
-                var elem = document.getElementById(e);  // elementIDの要素の取得。
-                if (elem) {vars.elements.push(elem);}  // elementIDの要素を配列に取得。
-            });
-            if (vars.elements.length > 0) {createPageNavi();}  // ページナビの作成。
+        all: function(elementID) {  // ここから開始する。引数にページナビを置換する要素のidを入れる。
+        	g.elem = document.getElementById(elementID);  // 要素のidの要素を取得。
+        	if (g.elem) {fd.createURL(1);}  // 置換する要素が存在するときページナビを作成する。引数はstart-index
         }
     }; // end of pg
-    var vars = {  // PageNavi2_Bloggerモジュール内の"グローバル"変数。
+    var g = {  // PageNavi3_Bloggerモジュール内の"グローバル"変数。
         perPage : pg.defaults.perPage,  // デフォルト値の取得。
         numPages : pg.defaults.numPages,  // デフォルト値の取得。
         jumpPages : pg.defaults.numPages, // ジャンプボタンでページ番号が総入れ替えになる設定値。
-        postLabel : null,  // ラベル名。
-        pageNo : null,  // ページ番号。
-        currentPageNo : null,  // 現在のページ番号。
-        elements : []  // ページナビを挿入するhtmlの要素の配列。
+        // postLabel : null,  // ラベル名。
+        //pageNo : null,  // ページ番号。
+        // currentPageNo : null,  // 現在のページ番号。
+        elem : null  // ページナビを挿入するdiv要素。
     };
-    function redirect(pageNo) {  // ページ番号のボタンをクリックされた時に呼び出される関数。
-        vars.pageNo = pageNo;  // 表示するページ番号
-        if (pageNo==1) {  // 1ページ目を取得するときはページ番号からURLを算出する必要がない。
-            location.href = (!vars.postLabel)?"/":"/search/label/" + vars.postLabel + "?max-results=" + vars.perPage;  // ラベルページインデックスの場合分け。
-        } else {
-            var startPost = (vars.pageNo - 1) * vars.perPage;  // 新たに表示する先頭ページの先頭になる投稿番号を取得。
-            var url;
-            if (vars.postLabel) {   // ラベルページインデックスの場合分け。
-                url = "/feeds/posts/summary/-/" + vars.postLabel + "?start-index=" + startPost + "&max-results=1&alt=json-in-script&callback=PageNavi2_Blogger.callback.getURL";
-            } else {
-                url = "/feeds/posts/summary?start-index=" + startPost + "&max-results=1&alt=json-in-script&callback=PageNavi2_Blogger.callback.getURL";
-            }
-            writeScript(url);  //スクリプト注入。
-        }
-    }
-    function createElem(tag){  // tagの要素を作成して返す。
-       return document.createElement(tag); 
-    }   
-    function createNodes(total_posts) {  // 総投稿数からページナビのボタンを作成。
-        var buttunElems = []; // ボタン要素を入れる配列。
-        var numPages = vars.numPages;  // ページナビに表示するページ数。
-        var prevText = '\u00ab';  // 左向きスキップのための矢印。
-        var nextText = '\u00bb';  // 右向きスキップのための矢印。
-        var diff =  Math.floor(numPages / 2);  // スタートページ - 現在のページ = diff。
-        var pageStart = vars.currentPageNo - diff;  // スタートページの算出。
-        if (pageStart < 1) {pageStart = 1;}  // スタートページが1より小さい時はスタートページを1にする。
-        var lastPageNo = Math.ceil(total_posts / vars.perPage); // 総投稿数から総ページ数を算出。
-        var pageEnd = pageStart + numPages - 1;  // エンドページの算出。
-        if (pageEnd > lastPageNo) {pageEnd = lastPageNo;} // エンドページが総ページ数より大きい時はエンドページを総ページ数にする。
-        if (pageStart > 1) {buttunElems.push(createButton(1,1));}  // スタートページが2以上のときはスタートページより左に1ページ目のボタンを作成する。
-        if (pageStart == 3) {buttunElems.push(createButton(2, 2));} // スタートページが3のときはジャンプボタンの代わりに2ページ目のボタンを作成する。
-        if (pageStart > 3) {  // スタートページが4以上のときはジャンプボタンを作成する。
-            var prevNumber = pageStart - vars.jumpPages + diff;  // ジャンプボタンでジャンプしたときに表示するページ番号。
-            if (prevNumber < 1) {prevNumber = 1;}
-            buttunElems.push(createButton(prevNumber, prevText));  // ページ番号が1のときだけボタンの作り方が異なるための場合分け。
-        }
-        for (var j = pageStart; j <= pageEnd; j++) {buttunElems.push((j == vars.currentPageNo)?createCurrentNode(j):createButton(j, j));}  // スタートボタンからエンドボタンまで作成。
-        if (pageEnd == lastPageNo - 2) {buttunElems.push(createButton(lastPageNo - 1, lastPageNo - 1));}  // エンドページと総ページ数の間に1ページしかないときは右ジャンプボタンは作成しない。
-        if (pageEnd < (lastPageNo - 2)) {  // エンドページが総ページ数より3小さい時だけ右ジャンプボタンを作成。
-            var nextnumber = pageEnd + 1 + diff;  // ジャンプボタンでジャンプしたときに表示するページ番号。
-            if (nextnumber > lastPageNo) {nextnumber = lastPageNo;} // 表示するページ番号が総ページ数になるときは総ページ数の番号にする。
-            buttunElems.push(createButton(nextnumber, nextText));  // 右ジャンプボタンの作成。
-        }
-        if (pageEnd < lastPageNo) {buttunElems.push(createButton(lastPageNo, lastPageNo));}  // 総ページ番号ボタンの作成。
-        writeHtml(buttunElems);  // htmlの書き込み。
-    }
-    function createPageNavi() {  // URLからラベル名と現在のページ番号を得、その後総投稿数を得るためのフィードを取得する。
-        var thisUrl = location.href;  // 現在表示しているURL。
-        if (/\/search\/label\//i.test(thisUrl)) {  // ラベルインデックスページの場合URLからラベル名を取得。
-            thisUrl = thisUrl.replace("m=0?","");  // モバイルデバイスからウェブバージョンを見た時の文字列を削除。
-            vars.postLabel = /\/search\/label\/(.+)(?=\?)/i.exec(thisUrl)[1];  // 後読みは未実装の可能性あるので使わない。
-        } 
-        if (!/\?q=|\.html$|updated-min=/i.test(thisUrl)) {  // 検索結果や固定ページやアーカイブページではないとき。
-            vars.currentPageNo = (/#PageNo=/i.test(thisUrl))?/#PageNo=(\d+)/i.exec(thisUrl)[1]:1;  // URLから現在のページ番号の取得。
-            var url;  // フィードを取得するためのURL。
-            if (vars.postLabel) {  // 総投稿数取得のためにフィードを取得するURLの作成。ラベルインデックスのときはそのラベル名の総投稿数を取得するため。
-                url = '/feeds/posts/summary/-/' + vars.postLabel + "?alt=json-in-script&callback=PageNavi2_Blogger.callback.getTotalPostCount&max-results=1";          
-            } else {
-                url = "/feeds/posts/summary?max-results=1&alt=json-in-script&callback=PageNavi2_Blogger.callback.getTotalPostCount";
-            }
-            writeScript(url); 
-        }
-    }   
-    function createButton(pageNo, text) {  // redirectするボタンのノード作成。
-        var spanNode = createElem('div');
-        spanNode.className = "displaypageNum";
-        spanNode.appendChild(createElem('a'));
-        spanNode.firstChild.textContent = text;
-        spanNode.firstChild.href = "#";
-        spanNode.firstChild.title = pageNo;  // redirect()の引数に使う。
-        return spanNode;
-    }
-    function createCurrentNode(j) {  // 現在表示中のページのノード作成。
-        var spanNode = createElem('div');
-        spanNode.className = "pagecurrent"; 
-        spanNode.textContent = j;
-        return spanNode;
-    }
-    function writeScript(url) {  // スクリプト注入。
-        var ws = createElem('script');
-        ws.type = 'text/javascript';
-        ws.src = url;
-        document.getElementsByTagName('head')[0].appendChild(ws);
-    }
-    function onclickEvent(e) {  // Event bubblingで発火させる関数。
-        e=e||event; // IE sucks
-        var target = e.target||e.srcElement; // targetはaになる。// and sucks again // target is the element that has been clicked
-        if (target && target.parentNode.className=="displaypageNum") {
-            redirect(target.title);
-            return false; // stop event from bubbling elsewhere
-        }
-    }
-    function writeHtml(buttunElems) {  // htmlの書き込み。
-        var divNode = createElem('div');       
-        buttunElems.forEach(function(b){
-            divNode.appendChild(b);
-        });  // ボタンノードを新しいdivノードの子ノードに追加する。
-        divNode.style.padding = "0px 5px";
-        divNode.style.display = "flex";  // flexの子要素はdivにする。spanはダメ。
-        divNode.style.justifyContent = "center";  // ボタンを中央寄せにする
-        divNode.style.alignItems = "center";  // これがないと現在のページのボタンがずれる。
-        divNode.style.transform = "scaleX(0.9)";  // 水平方向に0.9倍にする。
-        var dupNode;
-        vars.elements.forEach(function(elem){
-            elem.textContent = null;  // 要素を初期化。
-            dupNode = divNode.cloneNode(true);  // ボタンノードを子ノードとするdivノードを複製する。デフォルトのプロパティしかコピーされない。イベントもコピーされない。
-            dupNode.onclick = onclickEvent;  // 複製したノードにイベントのプロパティを追加する。
-            elem.appendChild(dupNode);   // 既存のノードに追加して表示させる。
-        });  
-    }
+    var ix = {  // インデックスページ作成。
+	    createIndex: function(posts) {  // 投稿のフィードデータからインデックスページを作成する。
+	    	var dateouter = nd.divClass(["date-outer"]);  // date-outerクラスのdiv要素を作成。
+	    	var h3 = nd.h3Class(["mobile-index-title","entry-title"]);  // 投稿タイトルをいれるh3タグを作成。
+//	    	h3.itemprop = "name";  // なぜか設定できない。とくに必要ないのかも。
+	    	var stack = [nd.divClass(["date-posts"]),nd.divClass(["post-outer"]),nd.divClass(["mobile-date-outer","date-outer"]),nd.divClass(["mobile-post-outer"]),nd.createElem("a"),h3];  // 入れ子にするノードの配列。
+	    	var p = nd.stackNodes(stack);  // date-postsクラスのdiv要素が外側のノードの入れ子を作成。
+	    	var postheader = nd.divClass(["post-header"]);  // post-headerクラスのdiv要素を作成。
+	    	postheader.setAttribute("style","display:flex;justify-content:flex-end");  // post-headerクラスのstyleを設定。右寄せのflexコンテナにする。
+	    	var node = nd.createElem("div");  // ラベルリストをいれるdiv要素を作成。
+	    	node.setAttribute("style","flex-grow:1;align-self:center");  // 幅が広がるflexアイテムにする。
+	    	postheader.appendChild(node);  // post-headerクラスのdivの子ノードにする。
+	    	node = nd.createElem("div");  // 投稿日時を入れるdiv要素を作成。
+	    	node.setAttribute("style","font-size:0.9em;flex-shrink:0;");  // 投稿日時のstyleを設定。幅は縮ませない。
+	    	postheader.appendChild(node);  // 投稿日時を入れるdiv要素をpost-headerクラスのdivの子ノードにする。 
+	    	p.firstChild.firstChild.firstChild.appendChild(postheader);  // mobile-post-outerクラスのdiv要素の子ノードにpostheaderノードを追加。
+	    	var mobileindexarrow = nd.divClass(["mobile-index-arrow"]);  // mobile-index-arrowクラスのdiv要素を作成。
+	    	mobileindexarrow.appendChild(nd.createTxt("›"));  // mobileindexarrowノードにテキストノードを追加。
+	    	p.firstChild.firstChild.firstChild.appendChild(mobileindexarrow);  // mobile-post-outerクラスのdiv要素の子ノードにmobileindexarrowノードを追加。
+	    	stack = [nd.divClass(["mobile-index-contents"]),nd.divClass(["mobile-index-thumbnail"]),nd.divClass(["Image"]),nd.imgClass([])];  // 入れ子にするノードの配列。
+	    	p.firstChild.firstChild.firstChild.appendChild(nd.stackNodes(stack));  // mobile-index-contentsクラスのdiv要素が外側の入れ子のノードをmobile-post-outerクラスのdiv要素の子ノードに追加。
+	    	p.firstChild.firstChild.firstChild.lastChild.setAttribute("style","display:flex;align-items:center;");  // mobile-index-contentsクラスのdiv要素をフレックスボックスにする。
+	    	p.firstChild.firstChild.firstChild.lastChild.appendChild(nd.divClass(["post-body"]));  // mobile-index-contentsクラスのdiv要素の子ノードにpost-bodyクラスのdiv要素を追加。
+	    	p.firstChild.firstChild.firstChild.lastChild.appendChild(nd.divClass([]));  // mobile-index-contentsクラスのdiv要素の子ノードにdiv要素を追加。
+	    	p.firstChild.firstChild.firstChild.lastChild.lastChild.setAttribute("style","clear:both;");  // 上記で追加したdiv要素のsytleを設定。
+	    	p.firstChild.firstChild.firstChild.appendChild(nd.divClass([]));  // ラベル名をdiv要素をmobile-post-outerクラスのdiv要素の子ノードに追加。
+	    	posts.forEach(function(e){  // 各投稿のフィードデータについて。
+	    		var postouter = p.cloneNode(true);  // date-postsクラスのdiv要素が外側のノードの入れ子を複製。
+	    		postouter.firstChild.firstChild.firstChild.firstChild.firstChild.appendChild(nd.createTxt(e.title.$t));  // h3要素のテキストノードに投稿タイトルを追加。
+	    		postouter.firstChild.firstChild.firstChild.firstChild.href = e.link[4].href;  // 投稿へのURLをa要素に追加。
+	    		var labels = (e.category)?e.category:""; // ラベル一覧を取得。
+	    		postouter.firstChild.firstChild.firstChild.childNodes[1].firstChild.appendChild(ix._createLabelist(labels));  // post-headerクラスのdiv要素にラベル一覧のノードを追加。
+	    		postouter.firstChild.firstChild.firstChild.childNodes[1].lastChild.appendChild(ix._createDate(e.published.$t, "公開"));  // post-headerクラスのdiv要素に公開日時のノードを追加。
+	    		postouter.firstChild.firstChild.firstChild.childNodes[1].lastChild.appendChild(ix._createDate(e.updated.$t, "更新"));  // post-headerクラスのdiv要素に更新日時のノードを追加。
+	    		postouter.firstChild.firstChild.firstChild.childNodes[3].firstChild.firstChild.firstChild.src = (e.media$thumbnail)?e.media$thumbnail.url:"";  // 投稿のサムネイルの表示。
+	    		postouter.firstChild.firstChild.firstChild.childNodes[3].childNodes[1].appendChild(nd.createTxt(ix._createSummary(e.summary.$t)));   // サマリーの表示。
+	    		dateouter.appendChild(postouter); 
+	    	});
+	    	g.elem.appendChild(dateouter);
+	    },
+	    _createLabelist: function(labels) {  // 投稿のラベルの配列を引数にラベルのdiv要素を返す関数。
+	    	var node = nd.createElem("div");
+	    	if (labels) {
+	    		node.appendChild(nd.createTxt("ラベル: "));
+	    		var a = nd.createElem("a");
+	    		var e = labels.pop();
+	    		ix._createLabel(node,a,e);
+    			e = labels.pop();
+	    		while (e) {
+	    			node.appendChild(nd.createTxt(", "));
+	    			ix._createLabel(node,a,e);
+	    			e = labels.pop();
+	    		}
+	    	}
+	    	return node;
+	    },
+	    _createLabel: function(node,a,e) {
+	    	var url = "/search/label/";
+	    	var label = a.cloneNode(false);
+			label.href = url + e.term;
+    		label.appendChild(nd.createTxt(e.term));
+			node.appendChild(label);
+	    },
+	    _createSummary: function(s) {  // サマリーを整形して返す関数。
+	    	var reS = /前の関連記事：[\W\w]*/;  // サマリーから除く文字列の正規表現パターン。
+	    	return s.replace(reS,"");
+	    },
+    	_createDate: function(d,txt) {  // 整形日時のdiv要素を返す関数。
+    		var reD = /(\d\d\d\d)-(\d\d)-(\d\d).(\d\d):(\d\d):\d\d/;  // 日時を得る正規表現パターン。
+    		var arr = reD.exec(d);  // 日時の取得。
+    		var node = nd.createElem("div");
+//    		node.setAttribute("style","font-size:0.9em;text-align:right;padding-bottom:5px;padding-right:30px");
+//    		node.setAttribute("style","font-size:0.9em;");
+    		node.appendChild(nd.createTxt(arr[1] + "年" + arr[2] + "月" + arr[3] + "日 " + arr[4] + "時" + arr[5] + "分" + txt));
+    		return node;
+    	}
+    };  // end of ix
+    var nd = {  // ノード関連。
+		divClass: function(classNames) {  // クラス名の配列を引数としてdiv要素を返す関数。
+			return nd._tagClass("div", classNames);
+		},
+		h3Class: function(classNames) {  // クラス名の配列を引数としてh3要素を返す関数。
+			return nd._tagClass("h3", classNames);
+		},
+		imgClass: function(classNames) {  // クラス名の配列を引数としてimg要素を返す関数。
+			return nd._tagClass("img", classNames);
+		},
+		_tagClass: function(tag,classNames) {  // 生成するtag名、クラス名の配列を引数として要素を返す関数。
+			var node = nd.createElem(tag);  // tag要素を作成。
+			if (classNames.length){
+				classNames.forEach(function(e) {
+					node.classList.add(e);  // クラスを追加。
+				});
+			}
+			return node;				
+		},
+		createElem: function(tag) {  // tagの要素を作成して返す関数。
+			return document.createElement(tag); 
+		},
+		createTxt: function(txt) {  // テキストノードを返す関数。
+			return document.createTextNode(txt);
+		},
+		stackNodes: function(stack) {  // ノードの配列を引数として入れ子のノードを返す関数。
+	    	var c = stack.pop();
+	    	while (stack.length) {  // 配列の要素の有無でfalseは判断できないので配列の長さで判断する。
+	    		var p = stack.pop();
+	    		p.appendChild(c);
+	    		c = p;
+	    	}
+	    	return p;
+		}
+    };  // end of nd
+    var fd = {  // フィード関連。
+		createURL: function (idx) {  // URLから情報を得てフィードを取得するURLを作成。引数はstart-index。
+	    	var reL = /\/search\/label\/(.+)/;  // ラベル収得のための正規表現パターン。
+	    	var reQ = /\?q=(.+)/;  // 検索語収得のための正規表現パターン。
+	    	var reM = /(\d\d\d\d)_(\d\d)_\d\d_archive.html/;  // 月のアーカイブページから年月を得るための正規表現パターン。
+	    	var reY = /\/search\?(updated-min=\d\d\d\d-01-01T00:00:00%2B09:00&updated-max=\d\d\d\d-01-01T00:00:00%2B09:00)/;  // 年のアーカイブページから期間を得るための正規表現パターン。
+	    	var url = "?"; // フィードを得るURLを初期化。
+	    	var url2 = "";  // アーカイブページ用の追加URLを初期化。
+	    	var thisUrl = location.href;  // 現在表示しているURLを収得。
+	    	thisUrl = thisUrl.replace(/\?m=[01][&\?]/,"?").replace(/[&\?]m=[01]/,"");  // ウェブバージョンとモバイルサイトのパラメータを削除。
+	    	if (reQ.test(thisUrl)) {  // 検索結果ページのとき
+	        	var q = reQ.exec(thisUrl)[1];  // 検索文字列を収得
+	        	url = "/?q=" + q + "&";
+	    	} else if (reL.test(thisUrl)) {  // ラベルインデックスページの時。
+	            var postLabel = reL.exec(thisUrl)[1];  // ラベル名を取得。後読みは未実装の可能性あるので使わない。
+	            url = "/-/" + postLabel + url;       
+	        } else if (reM.test(thisUrl)) {  // 月のアーカイブページの時。モバイルの時は後ろに?m=1がつく。
+	        	var arr = reM.exec(thisUrl);  // URLから年月を取得。
+	        	var em = new Date(arr[1], arr[2], 0).getDate();  // 月の末日を取得。28から31のいずれかしか返ってこないはず。
+	        	url2 = "&published-min=" + arr[1] + "-" + arr[2] + "-01T00:00:00%2B09:00&published-max=" + arr[1] + "-" + arr[2] + "-" + em  + "T23:59:99%2B09:00";  
+	        } else if (reY.test(thisUrl)) {  // 年のアーカイブページの時。
+	        	url2 = reY.exec(thisUrl)[1].replace(/updated-/g,"published-");  // URLから期間を取得。
+	        	url2 = "&" + url2;       
+	        } 
+	    	url = "/feeds/posts/summary" + url + "alt=json-in-script&callback=PageNavi3_Blogger.callback.loadFeed&max-results=" + g.perPage + "&start-index=" + idx + url2;    
+	    	fd._writeScript(url);
+	    },   
+	    _writeScript: function (url) {  // スクリプト注入。
+	        var ws = nd.createElem('script');
+	        ws.type = 'text/javascript';
+	        ws.src = url;
+	        document.getElementsByTagName('head')[0].appendChild(ws);
+	    }        			
+    }; // end of fd
     return pg;  // グローバルスコープにだす。
 }();
 //デフォルト値を変更したいときは以下のコメントアウトをはずして設定する。
-//PageNavi2_Blogger.defaults["perPage"] = 10 //1ページあたりの投稿数。
-//PageNavi2_Blogger.defaults["numPages"] = 5 // ページナビに表示するページ数。
-PageNavi2_Blogger.all(["blog-pager","blog-pager2"]);  // ページナビの起動。引き数にHTMLの要素のidを配列で入れる。
+//PageNavi3_Blogger.defaults["perPage"] = 10 //1ページあたりの投稿数。
+//PageNavi3_Blogger.defaults["numPages"] = 5 // ページナビに表示するページ数。
+PageNavi3_Blogger.all("blog-pager3");  // ページナビの起動。引き数にHTMLの要素のid。
