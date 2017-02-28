@@ -94,9 +94,10 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 	    		m.childNodes[1].childNodes[1].appendChild(ix._createDate(e.published.$t, "公開"));  // post-headerクラスのdiv要素に公開日時のノードを追加。
 	    		m.childNodes[1].childNodes[1].appendChild(ix._createDate(e.updated.$t, "更新"));  // post-headerクラスのdiv要素に更新日時のノードを追加。
 	    		m.childNodes[3].childNodes[0].childNodes[0].childNodes[0].src = (e.media$thumbnail)?e.media$thumbnail.url:"";  // 投稿のサムネイルの表示。
+//	    		m.childNodes[3].childNodes[1].href = e.link[4].href;  // 投稿へのURLをa要素に追加。
 	    		m.childNodes[3].childNodes[1].appendChild(nd.createTxt(ix._createSummary(e.summary.$t)));   // サマリーの表示。
 	    		var d = dateposts.cloneNode(true);
-	    		d.lastChild.lastChild.appendChild(m);
+	    		d.childNodes[0].childNodes[0].appendChild(m);
 	    		dateouter.appendChild(d);
 	    	});
 	    	g.elem.appendChild(dateouter);
@@ -106,17 +107,19 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 			m.appendChild(nd.stackNodes([nd.createElem("a"),nd.h3Class(["mobile-index-title","entry-title"])]));
 			m.childNodes[0].target = "_blank";
 			m.appendChild(nd.stackNodes([nd.divClass(["post-header"]),nd.createElem("div")]));
-			m.lastChild.setAttribute("style","display:flex;justify-content:flex-end");  // post-headerクラスのstyleを設定。右寄せのflexコンテナにする。
-			m.lastChild.lastChild.setAttribute("style","flex-grow:1;align-self:center");  // 幅が広がるflexアイテムにする。
-			m.lastChild.appendChild(nd.createElem("div"));
-			m.lastChild.lastChild.setAttribute("style","font-size:0.9em;flex-shrink:0;");  // 投稿日時のstyleを設定。幅は縮ませない。
+			m.childNodes[1].setAttribute("style","display:flex;justify-content:flex-end");  // post-headerクラスのstyleを設定。右寄せのflexコンテナにする。
+			m.childNodes[1].childNodes[0].setAttribute("style","flex-grow:1;align-self:center");  // 幅が広がるflexアイテムにする。
+			m.childNodes[1].appendChild(nd.createElem("div"));
+			m.childNodes[1].childNodes[1].setAttribute("style","font-size:0.9em;flex-shrink:0;");  // 投稿日時のstyleを設定。幅は縮ませない。
 			m.appendChild(nd.stackNodes([nd.divClass(["mobile-index-arrow"]),nd.createTxt("›")]));
 			var stack = [nd.divClass(["mobile-index-contents"]),nd.divClass(["mobile-index-thumbnail"]),nd.divClass(["Image"]),nd.imgClass([])];  // 入れ子にするノードの配列。
 			m.appendChild(nd.stackNodes(stack));
-			m.lastChild.setAttribute("style","display:flex;align-items:center;");  // mobile-index-contentsクラスのdiv要素をフレックスボックスにする。
-			m.lastChild.appendChild(nd.divClass(["post-body"]));
-			m.lastChild.appendChild(nd.createElem("div"));
-			m.lastChild.lastChild.setAttribute("style","clear:both;");  // 上記で追加したdiv要素のsytleを設定。
+			m.childNodes[3].setAttribute("style","display:flex;align-items:center;");  // mobile-index-contentsクラスのdiv要素をフレックスボックスにする。
+			m.childNodes[3].appendChild(nd.divClass(["post-body"]));
+//			m.childNodes[3].childNodes[0].target = "_blank";
+//			m.childNodes[3].childNodes[1].setAttribute("style", "text-decoration: none;");
+			m.childNodes[3].appendChild(nd.createElem("div"));
+			m.childNodes[3].childNodes[1].setAttribute("style","clear:both;");  // 上記で追加したdiv要素のsytleを設定。
 			return m;
 		},
 	    _createLabelist: function(labels) {  // 投稿のラベルの配列を引数にラベルのdiv要素を返す関数。
