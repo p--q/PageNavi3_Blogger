@@ -82,20 +82,45 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
     var ix = {  // インデックスページ作成。
 	    createIndex: function(posts) {  // 投稿のフィードデータからインデックスページを作成する。
 	    	var dateouter = nd.divClass(["date-outer"]);  // date-outerクラスのdiv要素を作成。
+	    	var stack = [nd.divClass(["date-posts"]),nd.divClass(["post-outer"]),nd.divClass(["mobile-date-outer","date-outer"])];  // 入れ子にするノードの配列。
+	    	var dateposts = nd.stackNodes(stack);  // date-postsクラスのdiv要素が外側のノードの入れ子を作成。
+	    	var mobilepostouter = ix._mobilepostouter();  // mobile-most-outerクラスのdiv要素の骨格を取得。
 	    	posts.forEach(function(e){  // 各投稿のフィードデータについて。
-	    		var postouter = postouter || ix._createNodes();  // date-postsクラスのdiv要素が外側のノードを取得。すでにあるときは使いまわす。
-	    		postouter.firstChild.firstChild.firstChild.firstChild.firstChild.appendChild(nd.createTxt(e.title.$t));  // h3要素のテキストノードに投稿タイトルを追加。
-	    		postouter.firstChild.firstChild.firstChild.firstChild.href = e.link[4].href;  // 投稿へのURLをa要素に追加。
+	    		var m = mobilepostouter.cloneNode(true);  // mobile-most-outerクラスのdiv要素の骨格を複製。
+	    		m.childNodes[0].href = e.link[4].href;  // 投稿へのURLを投稿タイトルのa要素に追加。
+	    		m.childNodes[0].childNodes[0].appendChild(nd.createTxt(e.title.$t));  // h3要素のテキストノードに投稿タイトルを追加。
 	    		var labels = (e.category)?e.category:""; // ラベル一覧を取得。
-	    		postouter.firstChild.firstChild.firstChild.childNodes[1].firstChild.appendChild(ix._createLabelist(labels));  // post-headerクラスのdiv要素にラベル一覧のノードを追加。
-	    		postouter.firstChild.firstChild.firstChild.childNodes[1].lastChild.appendChild(ix._createDate(e.published.$t, "公開"));  // post-headerクラスのdiv要素に公開日時のノードを追加。
-	    		postouter.firstChild.firstChild.firstChild.childNodes[1].lastChild.appendChild(ix._createDate(e.updated.$t, "更新"));  // post-headerクラスのdiv要素に更新日時のノードを追加。
-	    		postouter.firstChild.firstChild.firstChild.childNodes[3].firstChild.firstChild.firstChild.src = (e.media$thumbnail)?e.media$thumbnail.url:"";  // 投稿のサムネイルの表示。
-	    		postouter.firstChild.firstChild.firstChild.childNodes[3].childNodes[1].appendChild(nd.createTxt(ix._createSummary(e.summary.$t)));   // サマリーの表示。
-	    		dateouter.appendChild(postouter); 
+	    		m.childNodes[1].childNodes[0].appendChild(ix._createLabelist(labels));  // post-headerクラスのdiv要素にラベル一覧のノードを追加。
+	    		m.childNodes[1].childNodes[1].appendChild(ix._createDate(e.published.$t, "公開"));  // post-headerクラスのdiv要素に公開日時のノードを追加。
+	    		m.childNodes[1].childNodes[1].appendChild(ix._createDate(e.updated.$t, "更新"));  // post-headerクラスのdiv要素に更新日時のノードを追加。
+	    		m.childNodes[2].href = e.link[4].href;  // 投稿へのURLを投稿サマリのa要素に追加。
+	    		m.childNodes[2].childNodes[1].childNodes[0].childNodes[0].childNodes[0].src = (e.media$thumbnail)?e.media$thumbnail.url:"";  // 投稿のサムネイルの表示。
+	    		m.childNodes[2].childNodes[1].childNodes[1].appendChild(nd.createTxt(ix._createSummary(e.summary.$t)));   // 投稿サマリーの表示。
+	    		var d = dateposts.cloneNode(true);  // date-postsクラスの入れ子の複製を取得。
+	    		d.childNodes[0].childNodes[0].appendChild(m);  // date-postsクラスの入れ子の最後にmobile-most-outerクラスを追加。。
+	    		dateouter.appendChild(d);  //  date-outerクラスのdiv要素に追加。
 	    	});
-	    	g.elem.appendChild(dateouter);
+	    	g.elem.appendChild(dateouter);  // ページ内の要素に追加。
 	    },
+	    _mobilepostouter: function() {  // mobile-most-outerクラスのdiv要素の骨格を返す関数。
+			var m = nd.divClass(["mobile-most-outer"]);  // 親となるmobile-most-outerクラスのdiv要素を作成。
+			m.appendChild(nd.stackNodes([nd.createElem("a"),nd.h3Class(["mobile-index-title","entry-title"])]));
+			m.childNodes[0].target = "_blank";
+			m.appendChild(nd.stackNodes([nd.divClass(["post-header"]),nd.createElem("div")]));
+			m.childNodes[1].setAttribute("style","display:flex;justify-content:flex-end");  // post-headerクラスのstyleを設定。右寄せのflexコンテナにする。
+			m.childNodes[1].childNodes[0].setAttribute("style","flex-grow:1;align-self:center");  // 幅が広がるflexアイテムにする。
+			m.childNodes[1].appendChild(nd.createElem("div"));
+			m.childNodes[1].childNodes[1].setAttribute("style","font-size:0.9em;flex-shrink:0;");  // 投稿日時のstyleを設定。幅は縮ませない。
+			m.appendChild(nd.stackNodes([nd.createElem("a"),nd.divClass(["mobile-index-arrow"]),nd.createTxt("›")]));
+			m.childNodes[2].target = "_blank";
+			var stack = [nd.divClass(["mobile-index-contents"]),nd.divClass(["mobile-index-thumbnail"]),nd.divClass(["Image"]),nd.imgClass([])];  // 入れ子にするノードの配列。
+			m.childNodes[2].appendChild(nd.stackNodes(stack));
+			m.childNodes[2].childNodes[1].setAttribute("style","display:flex;align-items:center;");  // mobile-index-contentsクラスのdiv要素をフレックスボックスにする。
+			m.childNodes[2].childNodes[1].appendChild(nd.divClass(["post-body"]));
+			m.childNodes[2].childNodes[1].appendChild(nd.createElem("div"));
+			m.childNodes[2].childNodes[1].childNodes[2].setAttribute("style","clear:both;");  // 上記で追加したdiv要素のsytleを設定。
+			return m;
+		},
 	    _createLabelist: function(labels) {  // 投稿のラベルの配列を引数にラベルのdiv要素を返す関数。
 	    	var node = nd.createElem("div");
 	    	if (labels) {
@@ -111,32 +136,6 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 	    		}
 	    	}
 	    	return node;
-	    },
-	    _createNodes: function() {  // postouterノードを作成する
-	    	var h3 = nd.h3Class(["mobile-index-title","entry-title"]);  // 投稿タイトルをいれるh3タグを作成。
-//	    	h3.itemprop = "name";  // なぜか設定できない。とくに必要ないのかも。
-	    	var stack = [nd.divClass(["date-posts"]),nd.divClass(["post-outer"]),nd.divClass(["mobile-date-outer","date-outer"]),nd.divClass(["mobile-post-outer"]),nd.createElem("a"),h3];  // 入れ子にするノードの配列。
-	    	var p = nd.stackNodes(stack);  // date-postsクラスのdiv要素が外側のノードの入れ子を作成。
-	    	var postheader = nd.divClass(["post-header"]);  // post-headerクラスのdiv要素を作成。
-	    	postheader.setAttribute("style","display:flex;justify-content:flex-end");  // post-headerクラスのstyleを設定。右寄せのflexコンテナにする。
-	    	var node = nd.createElem("div");  // ラベルリストをいれるdiv要素を作成。
-	    	node.setAttribute("style","flex-grow:1;align-self:center");  // 幅が広がるflexアイテムにする。
-	    	postheader.appendChild(node);  // post-headerクラスのdivの子ノードにする。
-	    	node = nd.createElem("div");  // 投稿日時を入れるdiv要素を作成。
-	    	node.setAttribute("style","font-size:0.9em;flex-shrink:0;");  // 投稿日時のstyleを設定。幅は縮ませない。
-	    	postheader.appendChild(node);  // 投稿日時を入れるdiv要素をpost-headerクラスのdivの子ノードにする。 
-	    	p.firstChild.firstChild.firstChild.appendChild(postheader);  // mobile-post-outerクラスのdiv要素の子ノードにpostheaderノードを追加。
-	    	var mobileindexarrow = nd.divClass(["mobile-index-arrow"]);  // mobile-index-arrowクラスのdiv要素を作成。
-	    	mobileindexarrow.appendChild(nd.createTxt("›"));  // mobileindexarrowノードにテキストノードを追加。
-	    	p.firstChild.firstChild.firstChild.appendChild(mobileindexarrow);  // mobile-post-outerクラスのdiv要素の子ノードにmobileindexarrowノードを追加。
-	    	stack = [nd.divClass(["mobile-index-contents"]),nd.divClass(["mobile-index-thumbnail"]),nd.divClass(["Image"]),nd.imgClass([])];  // 入れ子にするノードの配列。
-	    	p.firstChild.firstChild.firstChild.appendChild(nd.stackNodes(stack));  // mobile-index-contentsクラスのdiv要素が外側の入れ子のノードをmobile-post-outerクラスのdiv要素の子ノードに追加。
-	    	p.firstChild.firstChild.firstChild.lastChild.setAttribute("style","display:flex;align-items:center;");  // mobile-index-contentsクラスのdiv要素をフレックスボックスにする。
-	    	p.firstChild.firstChild.firstChild.lastChild.appendChild(nd.divClass(["post-body"]));  // mobile-index-contentsクラスのdiv要素の子ノードにpost-bodyクラスのdiv要素を追加。
-	    	p.firstChild.firstChild.firstChild.lastChild.appendChild(nd.divClass([]));  // mobile-index-contentsクラスのdiv要素の子ノードにdiv要素を追加。
-	    	p.firstChild.firstChild.firstChild.lastChild.lastChild.setAttribute("style","clear:both;");  // 上記で追加したdiv要素のsytleを設定。
-	    	p.firstChild.firstChild.firstChild.appendChild(nd.divClass([]));  // ラベル名をdiv要素をmobile-post-outerクラスのdiv要素の子ノードに追加。	    	
-	    	return p;
 	    },
 	    _createLabel: function(node,a,e) {
 	    	var url = "/search/label/";
@@ -192,9 +191,10 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 			return document.createTextNode(txt);
 		},
 		stackNodes: function(stack) {  // ノードの配列を引数として入れ子のノードを返す関数。
+			var p;
 	    	var c = stack.pop();
 	    	while (stack.length) {  // 配列の要素の有無でfalseは判断できないので配列の長さで判断する。
-	    		var p = stack.pop();
+	    		p = stack.pop();
 	    		p.appendChild(c);
 	    		c = p;
 	    	}
