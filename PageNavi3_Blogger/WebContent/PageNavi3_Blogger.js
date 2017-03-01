@@ -9,8 +9,10 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
             loadFeed : function(json){  // 引数にフィードを受け取る関数。 
             	var posts = [];
             	Array.prototype.push.apply(posts, json.feed.entry);// 投稿のフィードデータを配列に追加。
-            	ix.createIndex(posts);  // インデックスページの作成。
+            	var dateouter = ix.createIndex(posts);  // インデックスページの作成。
+            	g.elem.appendChild(dateouter);  // ページ内の要素に追加。
             	pn.createPageNavi(json);  // ページナビの作成。
+            	
             }
         },
         all: function(elementID) {  // ここから開始する。引数にページナビを置換する要素のidを入れる。
@@ -100,7 +102,7 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 	    		d.childNodes[0].childNodes[0].appendChild(m);  // date-postsクラスの入れ子の最後にmobile-most-outerクラスを追加。。
 	    		dateouter.appendChild(d);  //  date-outerクラスのdiv要素に追加。
 	    	});
-	    	g.elem.appendChild(dateouter);  // ページ内の要素に追加。
+	    	return dateouter;
 	    },
 	    _mobilepostouter: function() {  // mobile-most-outerクラスのdiv要素の骨格を返す関数。
 			var m = nd.divClass(["mobile-most-outer"]);  // 親となるmobile-most-outerクラスのdiv要素を作成。
