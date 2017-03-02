@@ -10,9 +10,10 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
             	var posts = [];
             	Array.prototype.push.apply(posts, json.feed.entry);// 投稿のフィードデータを配列に追加。
             	var dateouter = ix.createIndex(posts);  // インデックスページの作成。
+            	var pagenavi = pn.createPageNavi(json);  // ページナビの作成。
+            	g.elem.appendChild(pagenavi.cloneNode(true));  // ページ内の要素に追加。イベントハンドラはクローンできない。
             	g.elem.appendChild(dateouter);  // ページ内の要素に追加。
-            	pn.createPageNavi(json);  // ページナビの作成。
-            	
+            	g.elem.appendChild(pagenavi);  // ページ内の要素に追加。
             }
         },
         all: function(elementID) {  // ここから開始する。引数にページナビを置換する要素のidを入れる。
@@ -33,50 +34,61 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
     };
     var pn = {  // ページナビ作成
 		createPageNavi: function(json) {  // フィードからページナビのボタンを作成。
-			var total = parseInt(json.feed.openSearch$totalResults.$t, 10);  // フィードから総投稿数の取得。
-			var prevText = '\u00ab';  // 左向きスキップのための矢印。
-		    var nextText = '\u00bb';  // 右向きスキップのための矢印。
-			var currentPageNo = Math.floor((g.idx + g.perPage -1 )/g.perPage);  // start-indexから現在のページを算出。
-		    var diff =  Math.floor(g.numPages / 2);  // スタートページ - 現在のページ = diff。
-		    var pageStart = currentPageNo - diff;  // スタートページの算出。
-		    if (pageStart < 1) {pageStart = 1;}  // スタートページが1より小さい時はスタートページを1にする。
-		    var lastPageNo = Math.ceil(total / g.perPage); // 総投稿数から総ページ数を算出。
-		    var pageEnd = pageStart + g.numPages - 1;  // エンドページの算出。
-		    if (pageEnd > lastPageNo) {pageEnd = lastPageNo;} // エンドページが総ページ数より大きい時はエンドページを総ページ数にする。	
-		    
-		    
-		    
-		    if (pageStart > 1) {buttunElems.push(pn.createButton(1,1));}  // スタートページが2以上のときはスタートページより左に1ページ目のボタンを作成する。
+			var pagenavi = pn._createNodes();
 			
-		    
-		    
-		    var buttunElems = []; // ボタン要素を入れる配列。。
-	
-		    
-		    if (pageStart == 3) {buttunElems.push(createButton(2, 2));} // スタートページが3のときはジャンプボタンの代わりに2ページ目のボタンを作成する。
-		    if (pageStart > 3) {  // スタートページが4以上のときはジャンプボタンを作成する。
-		        var prevNumber = pageStart - vars.jumpPages + diff;  // ジャンプボタンでジャンプしたときに表示するページ番号。
-		        if (prevNumber < 1) {prevNumber = 1;}
-		        buttunElems.push(createButton(prevNumber, prevText));  // ページ番号が1のときだけボタンの作り方が異なるための場合分け。
-		    }
-		    for (var j = pageStart; j <= pageEnd; j++) {buttunElems.push((j == vars.currentPageNo)?createCurrentNode(j):createButton(j, j));}  // スタートボタンからエンドボタンまで作成。
-		    if (pageEnd == lastPageNo - 2) {buttunElems.push(createButton(lastPageNo - 1, lastPageNo - 1));}  // エンドページと総ページ数の間に1ページしかないときは右ジャンプボタンは作成しない。
-		    if (pageEnd < (lastPageNo - 2)) {  // エンドページが総ページ数より3小さい時だけ右ジャンプボタンを作成。
-		        var nextnumber = pageEnd + 1 + diff;  // ジャンプボタンでジャンプしたときに表示するページ番号。
-		        if (nextnumber > lastPageNo) {nextnumber = lastPageNo;} // 表示するページ番号が総ページ数になるときは総ページ数の番号にする。
-		        buttunElems.push(createButton(nextnumber, nextText));  // 右ジャンプボタンの作成。
-		    }
-		    if (pageEnd < lastPageNo) {buttunElems.push(createButton(lastPageNo, lastPageNo));}  // 総ページ番号ボタンの作成。
-		    writeHtml(buttunElems);  // htmlの書き込み。 
+			return pagenavi;
+			
+//			var total = parseInt(json.feed.openSearch$totalResults.$t, 10);  // フィードから総投稿数の取得。
+//			var prevText = '\u00ab';  // 左向きスキップのための矢印。
+//		    var nextText = '\u00bb';  // 右向きスキップのための矢印。
+//			var currentPageNo = Math.floor((g.idx + g.perPage -1 )/g.perPage);  // start-indexから現在のページを算出。
+//		    var diff =  Math.floor(g.numPages / 2);  // スタートページ - 現在のページ = diff。
+//		    var pageStart = currentPageNo - diff;  // スタートページの算出。
+//		    if (pageStart < 1) {pageStart = 1;}  // スタートページが1より小さい時はスタートページを1にする。
+//		    var lastPageNo = Math.ceil(total / g.perPage); // 総投稿数から総ページ数を算出。
+//		    var pageEnd = pageStart + g.numPages - 1;  // エンドページの算出。
+//		    if (pageEnd > lastPageNo) {pageEnd = lastPageNo;} // エンドページが総ページ数より大きい時はエンドページを総ページ数にする。	
+//		    
+//		    
+//		    
+//		    if (pageStart > 1) {buttunElems.push(pn.createButton(1,1));}  // スタートページが2以上のときはスタートページより左に1ページ目のボタンを作成する。
+//			
+//		    
+//		    
+//		    var buttunElems = []; // ボタン要素を入れる配列。。
+//	
+//		    
+//		    if (pageStart == 3) {buttunElems.push(createButton(2, 2));} // スタートページが3のときはジャンプボタンの代わりに2ページ目のボタンを作成する。
+//		    if (pageStart > 3) {  // スタートページが4以上のときはジャンプボタンを作成する。
+//		        var prevNumber = pageStart - vars.jumpPages + diff;  // ジャンプボタンでジャンプしたときに表示するページ番号。
+//		        if (prevNumber < 1) {prevNumber = 1;}
+//		        buttunElems.push(createButton(prevNumber, prevText));  // ページ番号が1のときだけボタンの作り方が異なるための場合分け。
+//		    }
+//		    for (var j = pageStart; j <= pageEnd; j++) {buttunElems.push((j == vars.currentPageNo)?createCurrentNode(j):createButton(j, j));}  // スタートボタンからエンドボタンまで作成。
+//		    if (pageEnd == lastPageNo - 2) {buttunElems.push(createButton(lastPageNo - 1, lastPageNo - 1));}  // エンドページと総ページ数の間に1ページしかないときは右ジャンプボタンは作成しない。
+//		    if (pageEnd < (lastPageNo - 2)) {  // エンドページが総ページ数より3小さい時だけ右ジャンプボタンを作成。
+//		        var nextnumber = pageEnd + 1 + diff;  // ジャンプボタンでジャンプしたときに表示するページ番号。
+//		        if (nextnumber > lastPageNo) {nextnumber = lastPageNo;} // 表示するページ番号が総ページ数になるときは総ページ数の番号にする。
+//		        buttunElems.push(createButton(nextnumber, nextText));  // 右ジャンプボタンの作成。
+//		    }
+//		    if (pageEnd < lastPageNo) {buttunElems.push(createButton(lastPageNo, lastPageNo));}  // 総ページ番号ボタンの作成。
+//		    writeHtml(buttunElems);  // htmlの書き込み。 
+    	},
+    	_createNodes: function() {
+    		var p = nd.divClass(["pagenavi"]);
+    		
+    		
+    		
+    		return p;
     	},
 	    createButton: function(pageNo, text) {  // redirectするボタンのノード作成。
-		        var spanNode = createElem('div');
-		        spanNode.className = "displaypageNum";
-		        spanNode.appendChild(createElem('a'));
-		        spanNode.firstChild.textContent = text;
-		        spanNode.firstChild.href = "#";
-		        spanNode.firstChild.title = pageNo;  // redirect()の引数に使う。
-		        return spanNode;
+	        var spanNode = createElem('div');
+	        spanNode.className = "displaypageNum";
+	        spanNode.appendChild(createElem('a'));
+	        spanNode.firstChild.textContent = text;
+	        spanNode.firstChild.href = "#";
+	        spanNode.firstChild.title = pageNo;  // redirect()の引数に使う。
+	        return spanNode;
 	    }
     
 		
@@ -86,7 +98,7 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 	    	var dateouter = nd.divClass(["date-outer"]);  // date-outerクラスのdiv要素を作成。
 	    	var stack = [nd.divClass(["date-posts"]),nd.divClass(["post-outer"]),nd.divClass(["mobile-date-outer","date-outer"])];  // 入れ子にするノードの配列。
 	    	var dateposts = nd.stackNodes(stack);  // date-postsクラスのdiv要素が外側のノードの入れ子を作成。
-	    	var mobilepostouter = ix._mobilepostouter();  // mobile-most-outerクラスのdiv要素の骨格を取得。
+	    	var mobilepostouter = ix._createNodes();  // mobile-most-outerクラスのdiv要素の骨格を取得。
 	    	posts.forEach(function(e){  // 各投稿のフィードデータについて。
 	    		var m = mobilepostouter.cloneNode(true);  // mobile-most-outerクラスのdiv要素の骨格を複製。
 	    		m.childNodes[0].href = e.link[4].href;  // 投稿へのURLを投稿タイトルのa要素に追加。
@@ -104,7 +116,7 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 	    	});
 	    	return dateouter;
 	    },
-	    _mobilepostouter: function() {  // mobile-most-outerクラスのdiv要素の骨格を返す関数。
+	    _createNodes: function() {  // mobile-most-outerクラスのdiv要素の骨格を返す関数。
 			var m = nd.divClass(["mobile-most-outer"]);  // 親となるmobile-most-outerクラスのdiv要素を作成。
 			m.appendChild(nd.stackNodes([nd.createElem("a"),nd.h3Class(["mobile-index-title","entry-title"])]));
 			m.childNodes[0].target = "_blank";
