@@ -126,8 +126,9 @@ var PageNaviIndex_Blogger = PageNaviIndex_Blogger || function() {
 		_nodes: null,
 	    createIndex: function(posts) {  // 投稿のフィードデータからインデックスページを作成する。
 	    	var dateouter = nd.divClass(["date-outer"]);  // date-outerクラスのdiv要素を作成。
-	    	var stack = [nd.divClass(["date-posts"]),nd.divClass(["post-outer"]),nd.divClass(["mobile-date-outer","date-outer"])];  // 入れ子にするノードの配列。
-	    	var dateposts = nd.stackNodes(stack);  // date-postsクラスのdiv要素が外側のノードの入れ子を作成。
+//	    	var stack = [nd.divClass(["post-outer"]),nd.divClass(["mobile-date-outer","date-outer"])];  // 入れ子にするノードの配列。
+//	    	var dateposts = nd.stackNodes(stack);  // date-postsクラスのdiv要素が外側のノードの入れ子を作成。
+	    	var dateposts = nd.divClass(["post-outer"]); 
 	    	var mobilepostouter = ix._nodes;  // mobile-most-outerクラスのdiv要素の骨格を取得。
 	    	posts.forEach(function(e){  // 各投稿のフィードデータについて。
 	    		var m = mobilepostouter.cloneNode(true);  // mobile-most-outerクラスのdiv要素の骨格を複製。
@@ -141,7 +142,7 @@ var PageNaviIndex_Blogger = PageNaviIndex_Blogger || function() {
 	    		m.childNodes[2].childNodes[1].childNodes[0].childNodes[0].childNodes[0].src = (e.media$thumbnail)?e.media$thumbnail.url:"";  // 投稿のサムネイルの表示。
 	    		m.childNodes[2].childNodes[1].childNodes[1].appendChild(nd.createTxt(ix._createSummary(e.summary.$t)));   // 投稿サマリーの表示。
 	    		var d = dateposts.cloneNode(true);  // date-postsクラスの入れ子の複製を取得。
-	    		d.childNodes[0].childNodes[0].appendChild(m);  // date-postsクラスの入れ子の最後にmobile-most-outerクラスを追加。。
+	    		d.appendChild(m);  // date-postsクラスの入れ子の最後にmobile-most-outerクラスを追加。。
 	    		dateouter.appendChild(d);  //  date-outerクラスのdiv要素に追加。
 	    	});
 	    	return dateouter;
