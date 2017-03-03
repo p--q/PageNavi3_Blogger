@@ -1,6 +1,6 @@
-// PageNavi3_Bloggerモジュール
-var PageNavi3_Blogger = PageNavi3_Blogger || function() {
-    var pg = {  // グローバルスコープに出すオブジェクト。グローバルスコープから呼び出すときはPageNavi3_Bloggerになる。
+// PageNaviIndex_Bloggerモジュール
+var PageNaviIndex_Blogger = PageNaviIndex_Blogger || function() {
+    var pg = {  // グローバルスコープに出すオブジェクト。グローバルスコープから呼び出すときはPageNaviIndex_Bloggerになる。
         defaults : {  // 既定値。
             "perPage" : 7, //1ページあたりの投稿数。1ページの容量が1MBを超えないように設定する。最大150まで。
             "numPages" : 5,  // ページナビに表示する通常ページボタンの数。スタートページからエンドページまで。
@@ -9,7 +9,7 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
         callback : {  // フィードを受け取るコールバック関数。
             loadFeed : function(json){  // 引数にフィードを受け取る関数。 
             	var posts = [];
-            	Array.prototype.push.apply(posts, json.feed.entry);// 投稿のフィードデータを配列に追加。
+            	Array.prototype.push.apply(posts, json.feed.entry);// 投稿のフィードデータを配列に追加。  	
             	var dateouter = ix.createIndex(posts);  // インデックスページの作成。
             	var pagenavi = pn.createPageNavi(json);  // ページナビの作成。
             	g.elem.appendChild(pagenavi);  // ページ内の要素に追加。イベントハンドラはクローンできない。
@@ -18,19 +18,19 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
             }
         },
         all: function(elementID) {  // ここから開始する。引数にページナビを置換する要素のidを入れる。
+        	ix.init();
         	g.elem = document.getElementById(elementID);  // 要素のidの要素を取得。
         	g.idx = 1;  // start-indexを1にする。
         	if (g.elem) {fd.createURL();}  // 置換する要素が存在するときページを作成する。
         }
     }; // end of pg
-    var g = {  // PageNavi3_Bloggerモジュール内の"グローバル"変数。
+    var g = {  // PageNaviIndex_Bloggerモジュール内の"グローバル"変数。
         perPage : pg.defaults.perPage,  // デフォルト値の取得。
         numPages : pg.defaults.numPages,  // デフォルト値の取得。
-//        jumpPages : pg.defaults.numPages, // ジャンプボタンでページ番号が総入れ替えになる設定値。
         elem : null,  // ページナビを挿入するdiv要素。
         idx : null,  // start-index
-        jumpPages : pg.defaults.jumpPages
-    };
+        jumpPages : pg.defaults.jumpPages  
+    }; 
     var pn = {  // ページナビ作成
 		clonePageNavi: function(pagenavi) {
 			var node = pagenavi.cloneNode(true);
@@ -45,7 +45,7 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 		    if (pageStart < 1) {pageStart = 1;}  // スタートページが1より小さい時はスタートページを1にする。
 		    var lastPageNo = Math.ceil(total / g.perPage); // 総投稿数から総ページ数を算出。
 		    var pageEnd = pageStart + g.numPages - 1;  // エンドページの算出。
-		    if (pageEnd > lastPageNo) {pageEnd = lastPageNo;} // エンドページが総ページ数より大きい時はエンドページを総ページ数にする。				
+		    if (pageEnd > lastPageNo) {pageEnd = lastPageNo;} // エンドページが総ページ数より大きい時はエンドページを総ページ数にする。			
 			return pn._createButtons(pageStart, pageEnd, currentPageNo, lastPageNo, diff);
     	},
     	_createButtons: function(pageStart, pageEnd, currentPageNo, lastPageNo, diff) {
@@ -120,11 +120,15 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
             }       
         };  // end of eh    
     var ix = {  // インデックスページ作成。
+        init: function() {
+            	ix._nodes = ix._createNodes();
+            },
+		_nodes: null,
 	    createIndex: function(posts) {  // 投稿のフィードデータからインデックスページを作成する。
 	    	var dateouter = nd.divClass(["date-outer"]);  // date-outerクラスのdiv要素を作成。
 	    	var stack = [nd.divClass(["date-posts"]),nd.divClass(["post-outer"]),nd.divClass(["mobile-date-outer","date-outer"])];  // 入れ子にするノードの配列。
 	    	var dateposts = nd.stackNodes(stack);  // date-postsクラスのdiv要素が外側のノードの入れ子を作成。
-	    	var mobilepostouter = ix._createNodes();  // mobile-most-outerクラスのdiv要素の骨格を取得。
+	    	var mobilepostouter = ix._nodes;  // mobile-most-outerクラスのdiv要素の骨格を取得。
 	    	posts.forEach(function(e){  // 各投稿のフィードデータについて。
 	    		var m = mobilepostouter.cloneNode(true);  // mobile-most-outerクラスのdiv要素の骨格を複製。
 	    		m.childNodes[0].href = e.link[4].href;  // 投稿へのURLを投稿タイトルのa要素に追加。
@@ -265,7 +269,7 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
 	        	url2 = reY.exec(thisUrl)[1].replace(/updated-/g,"published-");  // URLから期間を取得。
 	        	url2 = "&" + url2;       
 	        } 
-	    	url = "/feeds/posts/summary" + url + "alt=json-in-script&callback=PageNavi3_Blogger.callback.loadFeed&max-results=" + g.perPage + "&start-index=" + g.idx + url2;    
+	    	url = "/feeds/posts/summary" + url + "alt=json-in-script&callback=PageNaviIndex_Blogger.callback.loadFeed&max-results=" + g.perPage + "&start-index=" + g.idx + url2;    
 	    	fd._writeScript(url);
 	    },   
 	    _writeScript: function (url) {  // スクリプト注入。
@@ -278,7 +282,7 @@ var PageNavi3_Blogger = PageNavi3_Blogger || function() {
     return pg;  // グローバルスコープにだす。
 }();
 //デフォルト値を変更したいときは以下のコメントアウトをはずして設定する。
-//PageNavi3_Blogger.defaults["perPage"] = 7 //1ページあたりの投稿数。
-//PageNavi3_Blogger.defaults["numPages"] = 5 // ページナビに表示するページ数。
-//PageNavi3_Blogger.defaults["jumpPages"] = true // ページナビに表示するページ数。
-PageNavi3_Blogger.all("blog-pager3");  // ページナビの起動。引き数にHTMLの要素のid。
+//PageNaviIndex_Blogger.defaults["perPage"] = 7 //1ページあたりの投稿数。
+//PageNaviIndex_Blogger.defaults["numPages"] = 5 // ページナビに表示するページ数。
+//PageNaviIndex_Blogger.defaults["jumpPages"] = true // ページナビに表示するページ数。
+PageNaviIndex_Blogger.all("pagenaviindex");  // ページナビの起動。引き数にHTMLの要素のid。
