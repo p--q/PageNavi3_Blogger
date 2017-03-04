@@ -243,7 +243,17 @@ var PageNaviIndex_Blogger = PageNaviIndex_Blogger || function() {
 	    		p.appendChild(c);
 	    		c = p;
 	    	}
-	    	return p;
+	    	return p||c;
+		},
+		appendChild: function(parent,child) {
+			var c = parent.childs[0];
+			while (c) {
+				var d = c.childs[0];
+				if (!d) {
+					c.appendChild(child);
+				} 
+				c = d;
+			}
 		}
     };  // end of nd
     var fd = {  // フィード関連。
